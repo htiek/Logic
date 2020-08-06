@@ -1,5 +1,5 @@
 #include "FOLParser.h"
-#include "Scanner.h"
+#include "FOLScanner.h"
 #include <queue>
 #include <stack>
 #include <vector>
@@ -10,16 +10,17 @@ using namespace std;
 
 #define PARSER_IS_VERBOSE (false)
 
-namespace { 
-  template <typename T> T popFrom(stack<T>& s) {
-    if (s.empty()) throw runtime_error("Pop from empty stack.");
-    T result = std::move(s.top());
-    s.pop();
-    return result;
-  }
-  
-  enum class Nonterminal {
-    ARGLIST,
+namespace FOL {
+    namespace {
+      template <typename T> T popFrom(stack<T>& s) {
+        if (s.empty()) throw runtime_error("Pop from empty stack.");
+        T result = std::move(s.top());
+        s.pop();
+        return result;
+      }
+
+      enum class Nonterminal {
+        ARGLIST,
     ARGS,
     CALL,
     FORMULA,
@@ -27,143 +28,143 @@ namespace {
     OPTDOT,
     _parserInternalStart,
 
-  };
-  
-  /* Type representing an item that can be on the parsing stack (either a
-   * terminal or a nonterminal).
-   */
-  struct Symbol {
-    bool isToken;
-    union {
-      TokenType   tokenType;
-      Nonterminal nonterminalType;
-    };
-    
-    Symbol(TokenType t) {
-      isToken = true;
-      tokenType = t;
-    }
-    Symbol(Nonterminal t) {
-      isToken = false;
-      nonterminalType = t;
-    }
-  };
-  
-  bool operator< (const Symbol& lhs, const Symbol& rhs) {
-    if (lhs.isToken != rhs.isToken) return lhs.isToken;
-    if (lhs.isToken) return lhs.tokenType < rhs.tokenType;
-    return lhs.nonterminalType < rhs.nonterminalType;
-  }
-  
-  /* Type representing auxiliary data to store in each stack entry. */
-  struct AuxData {
-    std::shared_ptr<FOL::ASTNode> field0;
-    std::vector<std::shared_ptr<FOL::ASTNode>> field1;
+      };
 
-  };
-  
-  /* Type representing data aggregated so far. */
-  struct StackData {
-    Token     token;  // Only active if the item is a terminal
-    AuxData   data;   // Only active if the item is a nonterminal
-  };
-  
-  /* Type representing an item on the stack. */
-  struct StackItem {
-    size_t    state;
-    StackData data;
-  };
-  
-  /* Base type for actions. */
-  struct Action {
-    virtual ~Action() = default;
-  };
-  
-  struct ShiftAction: Action {
-    size_t target;
-    
-    ShiftAction(int target) : target(target) {}
-  };
-  
-  struct HaltAction: Action {
-  
-  };
-  
-  struct ReduceAction: Action {
-    Nonterminal reduceTo;
-    
-    /* Does the reduction. */
-    virtual void reduce(stack<StackItem>& s) = 0;
-    
-    ReduceAction(Nonterminal t) : reduceTo(t) {}
-  };
-  
-  /* Helper template functions that fire off callbacks with the arguments
-   * expanded out into a list.
-   */
-  template <size_t N> struct DoReduction {
-    template <typename Callback, typename... Args>
-    static AuxData invoke(stack<StackItem>& s, Callback c, const Args&... args) {
-      /* Build arguments up in reverse order, since items are coming off of the stack! */
-      auto nextArg = popFrom(s);
-      return DoReduction<N - 1>::invoke(s, c, nextArg.data, args...);
-    }
-  };
-  template <> struct DoReduction<0> {
-    template <typename Callback, typename... Args>
-    static AuxData invoke(stack<StackItem>&, Callback c, const Args&... args) {
-      return c(args...);
-    }
-  };
-  
-  /* Utility metafunction that maps from a number N to a callback type that accepts
-   * N arguments.
-   */
-  template <size_t M> struct CallbackType {
-    template <size_t N, typename... Args> struct Helper {
-      using type = typename Helper<N - 1, Args..., StackData>::type;
-    };
-    template <typename... Args> struct Helper<0, Args...> {
-      using type = std::function<AuxData (Args...)>;
-    };
-    using type = typename Helper<M>::type;
-  };
-  
-  /* Use template system so we know how many arguments to forward. */
-  template <size_t N> struct ReduceActionN: ReduceAction {
-    typename CallbackType<N>::type callback; // Function to invoke with reduced items    
-    
-    void reduce(stack<StackItem>& s) override;
-    
-    ReduceActionN(Nonterminal n, typename CallbackType<N>::type c) : ReduceAction(n), callback(c) {}
-  };
-  
-  /* Unused argument type. */
-  struct _unused_ {};
-  
-  std::shared_ptr<FOL::ASTNode> reduce_CALL_from_IDENTIFIER_LPAREN_ARGS_RPAREN(const std::string& _parserArg1, const std::string&, std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg3, const std::string&);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_EXISTS_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<FOL::ASTNode> _parserArg4);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FALSE(const std::string&);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORALL_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<FOL::ASTNode> _parserArg4);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_AND_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_IFF_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_OR_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_LPAREN_FORMULA_RPAREN(const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg2, const std::string&);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_NOT_FORMULA(const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg2);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_OBJECT_EQUALS_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_OBJECT_NOTEQUALS_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3);
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_TRUE(const std::string&);
-  std::shared_ptr<FOL::ASTNode> reduce_OBJECT_from_CALL(std::shared_ptr<FOL::ASTNode> _parserArg1);
-  std::shared_ptr<FOL::ASTNode> reduce_OBJECT_from_IDENTIFIER(const std::string& _parserArg1);
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGLIST_from_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1);
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg3);
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGS_from();
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGS_from_ARGLIST(std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg1);
+      /* Type representing an item that can be on the parsing stack (either a
+       * terminal or a nonterminal).
+       */
+      struct Symbol {
+        bool isToken;
+        union {
+          TokenType   tokenType;
+          Nonterminal nonterminalType;
+        };
+
+        Symbol(TokenType t) {
+          isToken = true;
+          tokenType = t;
+        }
+        Symbol(Nonterminal t) {
+          isToken = false;
+          nonterminalType = t;
+        }
+      };
+
+      bool operator< (const Symbol& lhs, const Symbol& rhs) {
+        if (lhs.isToken != rhs.isToken) return lhs.isToken;
+        if (lhs.isToken) return lhs.tokenType < rhs.tokenType;
+        return lhs.nonterminalType < rhs.nonterminalType;
+      }
+
+      /* Type representing auxiliary data to store in each stack entry. */
+      struct AuxData {
+        std::shared_ptr<ASTNode> field0;
+    std::vector<std::shared_ptr<ASTNode>> field1;
+
+      };
+
+      /* Type representing data aggregated so far. */
+      struct StackData {
+        Token     token;  // Only active if the item is a terminal
+        AuxData   data;   // Only active if the item is a nonterminal
+      };
+
+      /* Type representing an item on the stack. */
+      struct StackItem {
+        size_t    state;
+        StackData data;
+      };
+
+      /* Base type for actions. */
+      struct Action {
+        virtual ~Action() = default;
+      };
+
+      struct ShiftAction: Action {
+        size_t target;
+
+        ShiftAction(int target) : target(target) {}
+      };
+
+      struct HaltAction: Action {
+
+      };
+
+      struct ReduceAction: Action {
+        Nonterminal reduceTo;
+
+        /* Does the reduction. */
+        virtual void reduce(stack<StackItem>& s) = 0;
+
+        ReduceAction(Nonterminal t) : reduceTo(t) {}
+      };
+
+      /* Helper template functions that fire off callbacks with the arguments
+       * expanded out into a list.
+       */
+      template <size_t N> struct DoReduction {
+        template <typename Callback, typename... Args>
+        static AuxData invoke(stack<StackItem>& s, Callback c, const Args&... args) {
+          /* Build arguments up in reverse order, since items are coming off of the stack! */
+          auto nextArg = popFrom(s);
+          return DoReduction<N - 1>::invoke(s, c, nextArg.data, args...);
+        }
+      };
+      template <> struct DoReduction<0> {
+        template <typename Callback, typename... Args>
+        static AuxData invoke(stack<StackItem>&, Callback c, const Args&... args) {
+          return c(args...);
+        }
+      };
+
+      /* Utility metafunction that maps from a number N to a callback type that accepts
+       * N arguments.
+       */
+      template <size_t M> struct CallbackType {
+        template <size_t N, typename... Args> struct Helper {
+          using type = typename Helper<N - 1, Args..., StackData>::type;
+        };
+        template <typename... Args> struct Helper<0, Args...> {
+          using type = std::function<AuxData (Args...)>;
+        };
+        using type = typename Helper<M>::type;
+      };
+
+      /* Use template system so we know how many arguments to forward. */
+      template <size_t N> struct ReduceActionN: ReduceAction {
+        typename CallbackType<N>::type callback; // Function to invoke with reduced items
+
+        void reduce(stack<StackItem>& s) override;
+
+        ReduceActionN(Nonterminal n, typename CallbackType<N>::type c) : ReduceAction(n), callback(c) {}
+      };
+
+      /* Unused argument type. */
+      struct _unused_ {};
+
+      std::shared_ptr<ASTNode> reduce_CALL_from_IDENTIFIER_LPAREN_ARGS_RPAREN(const std::string& _parserArg1, const std::string&, std::vector<std::shared_ptr<ASTNode>> _parserArg3, const std::string&);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_EXISTS_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<ASTNode> _parserArg4);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FALSE(const std::string&);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORALL_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<ASTNode> _parserArg4);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_AND_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_IFF_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_OR_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_LPAREN_FORMULA_RPAREN(const std::string&, std::shared_ptr<ASTNode> _parserArg2, const std::string&);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_NOT_FORMULA(const std::string&, std::shared_ptr<ASTNode> _parserArg2);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_OBJECT(std::shared_ptr<ASTNode> _parserArg1);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_OBJECT_EQUALS_OBJECT(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_OBJECT_NOTEQUALS_OBJECT(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_TRUE(const std::string&);
+  std::shared_ptr<ASTNode> reduce_OBJECT_from_CALL(std::shared_ptr<ASTNode> _parserArg1);
+  std::shared_ptr<ASTNode> reduce_OBJECT_from_IDENTIFIER(const std::string& _parserArg1);
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGLIST_from_OBJECT(std::shared_ptr<ASTNode> _parserArg1);
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::vector<std::shared_ptr<ASTNode>> _parserArg3);
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGS_from();
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGS_from_ARGLIST(std::vector<std::shared_ptr<ASTNode>> _parserArg1);
 
 
-  AuxData reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST__thunk(StackData a0, StackData a1, StackData a2) {
+      AuxData reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST__thunk(StackData a0, StackData a1, StackData a2) {
     AuxData result;
     result.field1 = reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST(a0.data.field0, a1.token.data, a2.data.field1);
     return result;
@@ -292,10 +293,10 @@ namespace {
   }
 
 
-  
-  /* Action table. */
-  const vector<map<Symbol, Action*>> kActionTable = {
-  {
+
+      /* Action table. */
+      const vector<map<Symbol, Action*>> kActionTable = {
+      {
   {    Nonterminal::CALL, new ShiftAction{9} },
   {    TokenType::EXISTS, new ShiftAction{33} },
   {    TokenType::FALSE, new ShiftAction{32} },
@@ -632,217 +633,218 @@ namespace {
   {    TokenType::SCAN_EOF, new HaltAction() },
 },
 
-  };
-  
-  template <size_t N>
-    void ReduceActionN<N>::reduce(stack<StackItem>& s) {
-      #if PARSER_IS_VERBOSE
-        cout << "  Should pop " << N << " items from the stack." << endl;
-        cout << "    Before: " << s.size() << endl;
-      #endif
-      /* Invoke the callback on the proper arguments, getting the AuxData
-       * to push onto the stack.
-       */
-      auto nextItem = DoReduction<N>::invoke(s, callback);
-      #if PARSER_IS_VERBOSE
-        cout << "    After: " << s.size() << endl;
-      #endif
-      
-      int state = s.top().state;
-      #if PARSER_IS_VERBOSE
-        cout << "  Top state is " << state << endl;
-      #endif
-      
-      /* Look up the shift destination for this nonterminal. */
-      auto* action = static_cast<ShiftAction*>(kActionTable[state].at(reduceTo));
-      #if PARSER_IS_VERBOSE
-        cout << "  Should shift to state " << action->target << endl;
-      #endif
-      
-      /* Push this onto the stack. */
-      s.push({ action->target, { { }, nextItem } }); 
-  }
-  
-  /* Internal parsing routine */
-  AuxData parseInternal(queue<Token>& tokens) {
-    stack<StackItem> s;
-    
-    /* Seed the stack with the initial state. */
-    s.push({ 0, {} });
-    
-    /* Run the parser! */
-    while (!tokens.empty()) {
-      /* Look at the next token. We only consume it in a shift. */
-      auto curr  = tokens.front();
-      int  state = s.top().state;
-      
-      #if PARSER_IS_VERBOSE
-        cout << "Current state: " << state << endl;
-        cout << "  Symbol: " << curr.data << endl;
-        cout << endl;
-      #endif
-      
-      /* Look up the action to take; if there is no action, it's an error. */
-      if (!kActionTable[state].count(curr.type)) {
-        if (curr.type == TokenType::SCAN_EOF) {
-          throw runtime_error("End of formula encountered unexpectedly. (Are you missing a close parenthesis?)");
+      };
+
+      template <size_t N>
+        void ReduceActionN<N>::reduce(stack<StackItem>& s) {
+          #if PARSER_IS_VERBOSE
+            cout << "  Should pop " << N << " items from the stack." << endl;
+            cout << "    Before: " << s.size() << endl;
+          #endif
+          /* Invoke the callback on the proper arguments, getting the AuxData
+           * to push onto the stack.
+           */
+          auto nextItem = DoReduction<N>::invoke(s, callback);
+          #if PARSER_IS_VERBOSE
+            cout << "    After: " << s.size() << endl;
+          #endif
+
+          int state = s.top().state;
+          #if PARSER_IS_VERBOSE
+            cout << "  Top state is " << state << endl;
+          #endif
+
+          /* Look up the shift destination for this nonterminal. */
+          auto* action = static_cast<ShiftAction*>(kActionTable[state].at(reduceTo));
+          #if PARSER_IS_VERBOSE
+            cout << "  Should shift to state " << action->target << endl;
+          #endif
+
+          /* Push this onto the stack. */
+          s.push({ action->target, { { }, nextItem } });
+      }
+
+      /* Internal parsing routine */
+      AuxData parseInternal(queue<Token>& tokens) {
+        stack<StackItem> s;
+
+        /* Seed the stack with the initial state. */
+        s.push({ 0, {} });
+
+        /* Run the parser! */
+        while (!tokens.empty()) {
+          /* Look at the next token. We only consume it in a shift. */
+          auto curr  = tokens.front();
+          int  state = s.top().state;
+
+          #if PARSER_IS_VERBOSE
+            cout << "Current state: " << state << endl;
+            cout << "  Symbol: " << curr.data << endl;
+            cout << endl;
+          #endif
+
+          /* Look up the action to take; if there is no action, it's an error. */
+          if (!kActionTable[state].count(curr.type)) {
+            if (curr.type == TokenType::SCAN_EOF) {
+              throw runtime_error("End of formula encountered unexpectedly. (Are you missing a close parenthesis?)");
+            }
+            throw runtime_error("Found \"" + to_string(curr) + "\" where it wasn't expected.");
+          }
+
+          /* See what action to take. */
+          auto action = kActionTable[state].at(curr.type);
+          if (auto* shift = dynamic_cast<ShiftAction*>(action)) {
+            #if PARSER_IS_VERBOSE
+              cout << "  Action: Shift to " << shift->target << endl;
+            #endif
+            s.push( { shift->target, {curr, {}} } ); // No special data.
+            tokens.pop();
+          } else if (auto* reduce = dynamic_cast<ReduceAction*>(action)) {
+            #if PARSER_IS_VERBOSE
+              cout << "  Action: Reduce" << endl;
+            #endif
+            reduce->reduce(s);
+          } else if (dynamic_cast<HaltAction*>(action)) {
+            #if PARSER_IS_VERBOSE
+              cout << "  Action: Halt" << endl;
+            #endif
+            return s.top().data.data;
+          } else {
+            throw runtime_error("Unknown action.");
+          }
         }
-        throw runtime_error("Found \"" + to_string(curr) + "\" where it wasn't expected.");
+
+        throw runtime_error("Out of tokens, but parser hasn't finished.");
       }
-      
-      /* See what action to take. */
-      auto action = kActionTable[state].at(curr.type);
-      if (auto* shift = dynamic_cast<ShiftAction*>(action)) {
-        #if PARSER_IS_VERBOSE
-          cout << "  Action: Shift to " << shift->target << endl;
-        #endif
-        s.push( { shift->target, {curr, {}} } ); // No special data.
-        tokens.pop();
-      } else if (auto* reduce = dynamic_cast<ReduceAction*>(action)) {
-        #if PARSER_IS_VERBOSE
-          cout << "  Action: Reduce" << endl;
-        #endif
-        reduce->reduce(s);
-      } else if (dynamic_cast<HaltAction*>(action)) {
-        #if PARSER_IS_VERBOSE
-          cout << "  Action: Halt" << endl;
-        #endif
-        return s.top().data.data;
-      } else {
-        throw runtime_error("Unknown action.");
-      }
-    }
-    
-    throw runtime_error("Out of tokens, but parser hasn't finished.");
-  }
-  
-  std::shared_ptr<FOL::ASTNode> reduce_CALL_from_IDENTIFIER_LPAREN_ARGS_RPAREN(const std::string& _parserArg1, const std::string&, std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg3, const std::string&) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::InvokeNode>(_parserArg1, _parserArg3);
+
+      std::shared_ptr<ASTNode> reduce_CALL_from_IDENTIFIER_LPAREN_ARGS_RPAREN(const std::string& _parserArg1, const std::string&, std::vector<std::shared_ptr<ASTNode>> _parserArg3, const std::string&) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<InvokeNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_EXISTS_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<FOL::ASTNode> _parserArg4) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::ExistentialNode>(_parserArg2, _parserArg4);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_EXISTS_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<ASTNode> _parserArg4) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<ExistentialNode>(_parserArg2, _parserArg4);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FALSE(const std::string&) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FALSE(const std::string&) {
+    std::shared_ptr<ASTNode> _parserArg0;
     _parserArg0 = make_shared<FOL::FalseNode>();
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORALL_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<FOL::ASTNode> _parserArg4) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::UniversalNode>  (_parserArg2, _parserArg4);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORALL_IDENTIFIER_OPTDOT_FORMULA(const std::string&, const std::string& _parserArg2, _unused_, std::shared_ptr<ASTNode> _parserArg4) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<UniversalNode>  (_parserArg2, _parserArg4);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_AND_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::AndNode>(_parserArg1, _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_AND_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<AndNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_IFF_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::IffNode>(_parserArg1, _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_IFF_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<IffNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::ImpliesNode>(_parserArg1, _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<ImpliesNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_FORMULA_OR_FORMULA(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::OrNode>(_parserArg1, _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_FORMULA_OR_FORMULA(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<OrNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_LPAREN_FORMULA_RPAREN(const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg2, const std::string&) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_LPAREN_FORMULA_RPAREN(const std::string&, std::shared_ptr<ASTNode> _parserArg2, const std::string&) {
+    std::shared_ptr<ASTNode> _parserArg0;
     _parserArg0 = _parserArg2;
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_NOT_FORMULA(const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg2) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_NOT_FORMULA(const std::string&, std::shared_ptr<ASTNode> _parserArg2) {
+    std::shared_ptr<ASTNode> _parserArg0;
     _parserArg0 = make_shared<FOL::NotNode>(_parserArg2);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_OBJECT(std::shared_ptr<ASTNode> _parserArg1) {
+    std::shared_ptr<ASTNode> _parserArg0;
     _parserArg0 = _parserArg1;
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_OBJECT_EQUALS_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::EqualsNode>(_parserArg1, _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_OBJECT_EQUALS_OBJECT(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<EqualsNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_OBJECT_NOTEQUALS_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::shared_ptr<FOL::ASTNode> _parserArg3) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::NotEqualsNode>(_parserArg1, _parserArg3);
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_OBJECT_NOTEQUALS_OBJECT(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::shared_ptr<ASTNode> _parserArg3) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<NotEqualsNode>(_parserArg1, _parserArg3);
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_FORMULA_from_TRUE(const std::string&) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
+  std::shared_ptr<ASTNode> reduce_FORMULA_from_TRUE(const std::string&) {
+    std::shared_ptr<ASTNode> _parserArg0;
     _parserArg0 = make_shared<FOL::TrueNode>();
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_OBJECT_from_CALL(std::shared_ptr<FOL::ASTNode> _parserArg1) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
+  std::shared_ptr<ASTNode> reduce_OBJECT_from_CALL(std::shared_ptr<ASTNode> _parserArg1) {
+    std::shared_ptr<ASTNode> _parserArg0;
     _parserArg0 = _parserArg1;
     return _parserArg0;
   }
 
-  std::shared_ptr<FOL::ASTNode> reduce_OBJECT_from_IDENTIFIER(const std::string& _parserArg1) {
-    std::shared_ptr<FOL::ASTNode> _parserArg0;
-    _parserArg0 = make_shared<FOL::VariableNode>(_parserArg1);
+  std::shared_ptr<ASTNode> reduce_OBJECT_from_IDENTIFIER(const std::string& _parserArg1) {
+    std::shared_ptr<ASTNode> _parserArg0;
+    _parserArg0 = make_shared<VariableNode>(_parserArg1);
     return _parserArg0;
   }
 
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGLIST_from_OBJECT(std::shared_ptr<FOL::ASTNode> _parserArg1) {
-    std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg0;
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGLIST_from_OBJECT(std::shared_ptr<ASTNode> _parserArg1) {
+    std::vector<std::shared_ptr<ASTNode>> _parserArg0;
     _parserArg0 = {_parserArg1};
     return _parserArg0;
   }
 
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST(std::shared_ptr<FOL::ASTNode> _parserArg1, const std::string&, std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg3) {
-    std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg0;
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGLIST_from_OBJECT_COMMA_ARGLIST(std::shared_ptr<ASTNode> _parserArg1, const std::string&, std::vector<std::shared_ptr<ASTNode>> _parserArg3) {
+    std::vector<std::shared_ptr<ASTNode>> _parserArg0;
     _parserArg3.insert(_parserArg3.begin(), _parserArg1); _parserArg0 = _parserArg3;
     return _parserArg0;
   }
 
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGS_from() {
-    std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg0;
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGS_from() {
+    std::vector<std::shared_ptr<ASTNode>> _parserArg0;
     _parserArg0 = {};
     return _parserArg0;
   }
 
-  std::vector<std::shared_ptr<FOL::ASTNode>> reduce_ARGS_from_ARGLIST(std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg1) {
-    std::vector<std::shared_ptr<FOL::ASTNode>> _parserArg0;
+  std::vector<std::shared_ptr<ASTNode>> reduce_ARGS_from_ARGLIST(std::vector<std::shared_ptr<ASTNode>> _parserArg1) {
+    std::vector<std::shared_ptr<ASTNode>> _parserArg0;
     _parserArg0 = _parserArg1;
     return _parserArg0;
   }
 
 
-}
+    }
 
-/* Public parsing routine. */
-std::shared_ptr<FOL::ASTNode> parseFOL(queue<Token>& q) {
-  return parseInternal(q).field0;
-}
-std::shared_ptr<FOL::ASTNode> parseFOL(queue<Token>&& q) {
-  return parseInternal(q).field0;
+    /* Public parsing routine. */
+    std::shared_ptr<ASTNode> parse(queue<Token>& q) {
+      return parseInternal(q).field0;
+    }
+    std::shared_ptr<ASTNode> parse(queue<Token>&& q) {
+      return parseInternal(q).field0;
+    }
 }

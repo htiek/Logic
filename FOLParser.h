@@ -1,13 +1,15 @@
 #ifndef FOLParser_Included
 #define FOLParser_Included
 
-#include "Scanner.h"
+#include "FOLScanner.h"
 #include <queue>
 #include <memory>
 #include "FOLAST.h"
 
 
-std::shared_ptr<FOL::ASTNode> parseFOL(std::queue<Token>& q);
-std::shared_ptr<FOL::ASTNode> parseFOL(std::queue<Token>&& q);
+namespace FOL {
+    std::shared_ptr<ASTNode> parse(std::queue<Token>& q);
+    std::shared_ptr<ASTNode> parse(std::queue<Token>&& q);
+}
 
 #endif
