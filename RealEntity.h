@@ -2,7 +2,7 @@
 #define RealEntity_Included
 
 #include "Entity.h"
-#include "Logic/FOLExpressionBuilder.h"
+#include "FOLExpressionBuilder.h"
 #include <memory>
 #include <string>
 
