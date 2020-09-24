@@ -9,6 +9,8 @@
 #include <string>
 #include <ostream>
 #include <unordered_map>
+#include <vector>
+#include <set>
 
 namespace PL {
   class ExpressionVisitor;
@@ -17,7 +19,6 @@ namespace PL {
   using Context = std::unordered_map<std::string, bool>;
 
   /* Base Type */
-
   class Expression {
   public:
     virtual ~Expression() = default;
@@ -195,6 +196,18 @@ namespace PL {
     virtual void handle(const IffExpression &) {}
     virtual void handle(const VariableExpression &) {}
   };
+
+  /* General PL utilities. */
+  using Formula = std::shared_ptr<Expression>;
+
+  /* Returns the set of variables used in the given PL formula. */
+  std::set<std::string> variablesIn(Formula f);
+
+  /* Produces a truth table for the given formula. The variables are
+   * implicitly ordered in the same ordering as what's given by
+   * variablesIn.
+   */
+  std::vector<std::pair<std::vector<bool>, bool>> truthTableFor(Formula f);
 }
 
 #endif
