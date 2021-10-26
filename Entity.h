@@ -7,9 +7,9 @@
 using Entity = std::shared_ptr<struct RealEntity>;
 using World  = std::set<Entity>;
 
-bool Person(Entity e);
-bool Cat(Entity e);
-bool Robot(Entity e);
-bool Loves(Entity x, Entity y);
+bool Sunny(Entity e);
+bool Rainy(Entity e);
+bool Cloudy(Entity e);
+bool IsNextDay(Entity now, Entity later);
 
 #endif

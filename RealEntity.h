@@ -6,22 +6,17 @@
 #include <memory>
 #include <string>
 
-enum class EntityType {
-  PERSON,
-  CAT,
-  ROBOT
-};
-
-std::string to_string(EntityType);
-
 struct RealEntity {
   std::string name;
-  EntityType type;
-  std::set<RealEntity *> loves;
+  std::set<RealEntity *> futures;
+
+  bool isRainy  = false;
+  bool isSunny  = false;
+  bool isCloudy = false;
   
-  RealEntity(const std::string& name, EntityType type, std::set<RealEntity *> loves = {}) : name(name), type(type), loves(loves) {}
+  RealEntity(const std::string& name, std::set<RealEntity *> futures = {}) : name(name), futures(futures) {}
 };
 
-FOL::BuildContext entityBuildContext();
+FOL::BuildContext entityBuildContext(Entity today);
 
 #endif

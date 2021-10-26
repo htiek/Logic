@@ -4,36 +4,31 @@
 #include <sstream>
 using namespace std;
 
-bool Person(Entity e) {
-  return e->type == EntityType::PERSON;
+bool Sunny(Entity e) {
+    return e->isSunny;
 }
-bool Cat(Entity e) {
-  return e->type == EntityType::CAT;
+bool Rainy(Entity e) {
+    return e->isRainy;
 }
-bool Robot(Entity e) {
-  return e->type == EntityType::ROBOT;
+bool Cloudy(Entity e) {
+    return e->isCloudy;
 }
-bool Loves(Entity x, Entity y) {
-  return x->loves.count(y.get());
-}
-
-string to_string(EntityType type) {
-  if (type == EntityType::PERSON) return "Person";
-  if (type == EntityType::CAT)    return "Cat";
-  if (type == EntityType::ROBOT)  return "Robot";
-  throw runtime_error("Unknown entity type.");
+bool IsNextDay(Entity x, Entity y) {
+    return x->futures.count(y.get());
 }
 
-FOL::BuildContext entityBuildContext() {
-  return {
-    {}, /* Constants: None */
-    {
-      { "Person", { 1, [](const vector<Entity>& e) { return Person(e[0]); } } },
-      { "Cat",    { 1, [](const vector<Entity>& e) { return Cat(e[0]); } } },
-      { "Robot",  { 1, [](const vector<Entity>& e) { return Robot(e[0]); } } },
-      { "Loves",  { 2, [](const vector<Entity>& e) { return Loves(e[0], e[1]); } } },
-    },
-    {} /* Functions: None */
-  };
+FOL::BuildContext entityBuildContext(Entity today) {
+    return {
+        {
+            { "Today", today }
+        },
+        {
+            { "Sunny", { 1, [](const vector<Entity>& e) { return Sunny(e[0]); } } },
+            { "Rainy",    { 1, [](const vector<Entity>& e) { return Rainy(e[0]); } } },
+            { "Cloudy",  { 1, [](const vector<Entity>& e) { return Cloudy(e[0]); } } },
+            { "IsNextDay",  { 2, [](const vector<Entity>& e) { return IsNextDay(e[0], e[1]); } } },
+        },
+        {} /* Functions: None */
+    };
 }
 
