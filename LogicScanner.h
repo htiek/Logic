@@ -23,6 +23,7 @@ namespace Logic {
       IDENTIFIER = 'I',
       DOT = '.',
       COMMA = ',',
+      BOWTIE = 'B',
       SCAN_EOF = '$'
     };
 

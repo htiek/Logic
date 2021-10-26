@@ -68,7 +68,12 @@ namespace Logic {
             { "!=",               TokenType::NOTEQUALS },
             { "\\ne",             TokenType::NOTEQUALS },
             { "≠",                TokenType::NOTEQUALS },
-            { "\\neq",            TokenType::NOTEQUALS },
+            { "⋈",                TokenType::BOWTIE    },
+            { "⧓",                TokenType::BOWTIE    },
+            { "bowtie",           TokenType::BOWTIE    },
+            { "Bowtie",           TokenType::BOWTIE    },
+            { "BowTie",           TokenType::BOWTIE    },
+            { "BOWTIE",           TokenType::BOWTIE    },
         };
 
         /* Replacements for <cctype>, given that we're working with

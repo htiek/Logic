@@ -153,6 +153,30 @@ namespace PL {
     std::string name;
   };
 
+  class BowtieExpression: public Expression {
+  public:
+    BowtieExpression(std::shared_ptr<Expression> first,
+                     std::shared_ptr<Expression> second,
+                     std::shared_ptr<Expression> third) : firstE(first), secondE(second), thirdE(third) {}
+
+    void print(std::ostream& out) const override;
+    void accept(ExpressionVisitor* visitor) const override;
+    bool evaluate(const Context &) const override;
+
+    std::shared_ptr<Expression> first() const {
+      return firstE;
+    }
+    std::shared_ptr<Expression> second() const {
+      return secondE;
+    }
+    std::shared_ptr<Expression> third() const {
+      return thirdE;
+    }
+
+  private:
+    std::shared_ptr<Expression> firstE, secondE, thirdE;
+  };
+
   /* Visitor type. This will not walk the tree automatically; for that, use
    * ExpressionTreeWalker.
    */
@@ -169,6 +193,7 @@ namespace PL {
     virtual void visit(const ImpliesExpression &) {}
     virtual void visit(const IffExpression &) {}
     virtual void visit(const VariableExpression &) {}
+    virtual void visit(const BowtieExpression &) {}
   };
 
   /* Visitor subtype that walks the full tree automatically, calling into
@@ -185,6 +210,7 @@ namespace PL {
     virtual void visit(const ImpliesExpression &) override final;
     virtual void visit(const IffExpression &) override final;
     virtual void visit(const VariableExpression &) override final;
+    virtual void visit(const BowtieExpression &) override final;
 
   protected:
     virtual void handle(const TrueExpression &) {}
@@ -195,6 +221,7 @@ namespace PL {
     virtual void handle(const ImpliesExpression &) {}
     virtual void handle(const IffExpression &) {}
     virtual void handle(const VariableExpression &) {}
+    virtual void handle(const BowtieExpression &) {}
   };
 
   /* General PL utilities. */
