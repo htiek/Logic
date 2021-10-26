@@ -136,7 +136,8 @@ namespace PL {
       /* Unused argument type. */
       struct _unused_ {};
 
-      std::shared_ptr<Expression> reduce_FORMULA_from_FALSE(const std::string&);
+      std::shared_ptr<Expression> reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN(const std::string&, const std::string&, std::shared_ptr<Expression> _parserArg3, const std::string&, std::shared_ptr<Expression> _parserArg5, const std::string&, std::shared_ptr<Expression> _parserArg7, const std::string&);
+  std::shared_ptr<Expression> reduce_FORMULA_from_FALSE(const std::string&);
   std::shared_ptr<Expression> reduce_FORMULA_from_FORMULA_AND_FORMULA(std::shared_ptr<Expression> _parserArg1, const std::string&, std::shared_ptr<Expression> _parserArg3);
   std::shared_ptr<Expression> reduce_FORMULA_from_FORMULA_IFF_FORMULA(std::shared_ptr<Expression> _parserArg1, const std::string&, std::shared_ptr<Expression> _parserArg3);
   std::shared_ptr<Expression> reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA(std::shared_ptr<Expression> _parserArg1, const std::string&, std::shared_ptr<Expression> _parserArg3);
@@ -147,7 +148,13 @@ namespace PL {
   std::shared_ptr<Expression> reduce_FORMULA_from_TRUE(const std::string&);
 
 
-      AuxData reduce_FORMULA_from_FALSE__thunk(StackData a0) {
+      AuxData reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk(StackData a0, StackData a1, StackData a2, StackData a3, StackData a4, StackData a5, StackData a6, StackData a7) {
+    AuxData result;
+    result.field0 = reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN(a0.token.data, a1.token.data, a2.data.field0, a3.token.data, a4.data.field0, a5.token.data, a6.data.field0, a7.token.data);
+    return result;
+  }
+
+  AuxData reduce_FORMULA_from_FALSE__thunk(StackData a0) {
     AuxData result;
     result.field0 = reduce_FORMULA_from_FALSE(a0.token.data);
     return result;
@@ -206,8 +213,9 @@ namespace PL {
       /* Action table. */
       const vector<map<Symbol, Action*>> kActionTable = {
       {
+  {    TokenType::BOWTIE, new ShiftAction{16} },
   {    TokenType::FALSE, new ShiftAction{15} },
-  {    Nonterminal::FORMULA, new ShiftAction{17} },
+  {    Nonterminal::FORMULA, new ShiftAction{25} },
   {    TokenType::IDENTIFIER, new ShiftAction{4} },
   {    TokenType::LPAREN, new ShiftAction{3} },
   {    TokenType::NOT, new ShiftAction{2} },
@@ -215,6 +223,7 @@ namespace PL {
 },
 {
   {    TokenType::AND, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_TRUE__thunk) },
+  {    TokenType::COMMA, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_TRUE__thunk) },
   {    TokenType::IFF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_TRUE__thunk) },
   {    TokenType::IMPLIES, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_TRUE__thunk) },
   {    TokenType::OR, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_TRUE__thunk) },
@@ -222,14 +231,16 @@ namespace PL {
   {    TokenType::SCAN_EOF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_TRUE__thunk) },
 },
 {
+  {    TokenType::BOWTIE, new ShiftAction{16} },
   {    TokenType::FALSE, new ShiftAction{15} },
-  {    Nonterminal::FORMULA, new ShiftAction{16} },
+  {    Nonterminal::FORMULA, new ShiftAction{24} },
   {    TokenType::IDENTIFIER, new ShiftAction{4} },
   {    TokenType::LPAREN, new ShiftAction{3} },
   {    TokenType::NOT, new ShiftAction{2} },
   {    TokenType::TRUE, new ShiftAction{1} },
 },
 {
+  {    TokenType::BOWTIE, new ShiftAction{16} },
   {    TokenType::FALSE, new ShiftAction{15} },
   {    Nonterminal::FORMULA, new ShiftAction{5} },
   {    TokenType::IDENTIFIER, new ShiftAction{4} },
@@ -239,6 +250,7 @@ namespace PL {
 },
 {
   {    TokenType::AND, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_IDENTIFIER__thunk) },
+  {    TokenType::COMMA, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_IDENTIFIER__thunk) },
   {    TokenType::IFF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_IDENTIFIER__thunk) },
   {    TokenType::IMPLIES, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_IDENTIFIER__thunk) },
   {    TokenType::OR, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_IDENTIFIER__thunk) },
@@ -254,6 +266,7 @@ namespace PL {
 },
 {
   {    TokenType::AND, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_LPAREN_FORMULA_RPAREN__thunk) },
+  {    TokenType::COMMA, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_LPAREN_FORMULA_RPAREN__thunk) },
   {    TokenType::IFF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_LPAREN_FORMULA_RPAREN__thunk) },
   {    TokenType::IMPLIES, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_LPAREN_FORMULA_RPAREN__thunk) },
   {    TokenType::OR, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_LPAREN_FORMULA_RPAREN__thunk) },
@@ -261,6 +274,7 @@ namespace PL {
   {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_LPAREN_FORMULA_RPAREN__thunk) },
 },
 {
+  {    TokenType::BOWTIE, new ShiftAction{16} },
   {    TokenType::FALSE, new ShiftAction{15} },
   {    Nonterminal::FORMULA, new ShiftAction{8} },
   {    TokenType::IDENTIFIER, new ShiftAction{4} },
@@ -270,6 +284,7 @@ namespace PL {
 },
 {
   {    TokenType::AND, new ShiftAction{13} },
+  {    TokenType::COMMA, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_OR_FORMULA__thunk) },
   {    TokenType::IFF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_OR_FORMULA__thunk) },
   {    TokenType::IMPLIES, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_OR_FORMULA__thunk) },
   {    TokenType::OR, new ShiftAction{7} },
@@ -277,6 +292,7 @@ namespace PL {
   {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_OR_FORMULA__thunk) },
 },
 {
+  {    TokenType::BOWTIE, new ShiftAction{16} },
   {    TokenType::FALSE, new ShiftAction{15} },
   {    Nonterminal::FORMULA, new ShiftAction{10} },
   {    TokenType::IDENTIFIER, new ShiftAction{4} },
@@ -286,6 +302,7 @@ namespace PL {
 },
 {
   {    TokenType::AND, new ShiftAction{13} },
+  {    TokenType::COMMA, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA__thunk) },
   {    TokenType::IFF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA__thunk) },
   {    TokenType::IMPLIES, new ShiftAction{9} },
   {    TokenType::OR, new ShiftAction{7} },
@@ -293,8 +310,89 @@ namespace PL {
   {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IMPLIES_FORMULA__thunk) },
 },
 {
+  {    TokenType::BOWTIE, new ShiftAction{16} },
   {    TokenType::FALSE, new ShiftAction{15} },
   {    Nonterminal::FORMULA, new ShiftAction{12} },
+  {    TokenType::IDENTIFIER, new ShiftAction{4} },
+  {    TokenType::LPAREN, new ShiftAction{3} },
+  {    TokenType::NOT, new ShiftAction{2} },
+  {    TokenType::TRUE, new ShiftAction{1} },
+},
+{
+  {    TokenType::AND, new ShiftAction{13} },
+  {    TokenType::COMMA, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IFF_FORMULA__thunk) },
+  {    TokenType::IFF, new ShiftAction{11} },
+  {    TokenType::IMPLIES, new ShiftAction{9} },
+  {    TokenType::OR, new ShiftAction{7} },
+  {    TokenType::RPAREN, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IFF_FORMULA__thunk) },
+  {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IFF_FORMULA__thunk) },
+},
+{
+  {    TokenType::BOWTIE, new ShiftAction{16} },
+  {    TokenType::FALSE, new ShiftAction{15} },
+  {    Nonterminal::FORMULA, new ShiftAction{14} },
+  {    TokenType::IDENTIFIER, new ShiftAction{4} },
+  {    TokenType::LPAREN, new ShiftAction{3} },
+  {    TokenType::NOT, new ShiftAction{2} },
+  {    TokenType::TRUE, new ShiftAction{1} },
+},
+{
+  {    TokenType::AND, new ShiftAction{13} },
+  {    TokenType::COMMA, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
+  {    TokenType::IFF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
+  {    TokenType::IMPLIES, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
+  {    TokenType::OR, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
+  {    TokenType::RPAREN, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
+  {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
+},
+{
+  {    TokenType::AND, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::COMMA, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::IFF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::IMPLIES, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::OR, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::RPAREN, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::SCAN_EOF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+},
+{
+  {    TokenType::LPAREN, new ShiftAction{17} },
+},
+{
+  {    TokenType::BOWTIE, new ShiftAction{16} },
+  {    TokenType::FALSE, new ShiftAction{15} },
+  {    Nonterminal::FORMULA, new ShiftAction{18} },
+  {    TokenType::IDENTIFIER, new ShiftAction{4} },
+  {    TokenType::LPAREN, new ShiftAction{3} },
+  {    TokenType::NOT, new ShiftAction{2} },
+  {    TokenType::TRUE, new ShiftAction{1} },
+},
+{
+  {    TokenType::AND, new ShiftAction{13} },
+  {    TokenType::COMMA, new ShiftAction{19} },
+  {    TokenType::IFF, new ShiftAction{11} },
+  {    TokenType::IMPLIES, new ShiftAction{9} },
+  {    TokenType::OR, new ShiftAction{7} },
+},
+{
+  {    TokenType::BOWTIE, new ShiftAction{16} },
+  {    TokenType::FALSE, new ShiftAction{15} },
+  {    Nonterminal::FORMULA, new ShiftAction{20} },
+  {    TokenType::IDENTIFIER, new ShiftAction{4} },
+  {    TokenType::LPAREN, new ShiftAction{3} },
+  {    TokenType::NOT, new ShiftAction{2} },
+  {    TokenType::TRUE, new ShiftAction{1} },
+},
+{
+  {    TokenType::AND, new ShiftAction{13} },
+  {    TokenType::COMMA, new ShiftAction{21} },
+  {    TokenType::IFF, new ShiftAction{11} },
+  {    TokenType::IMPLIES, new ShiftAction{9} },
+  {    TokenType::OR, new ShiftAction{7} },
+},
+{
+  {    TokenType::BOWTIE, new ShiftAction{16} },
+  {    TokenType::FALSE, new ShiftAction{15} },
+  {    Nonterminal::FORMULA, new ShiftAction{22} },
   {    TokenType::IDENTIFIER, new ShiftAction{4} },
   {    TokenType::LPAREN, new ShiftAction{3} },
   {    TokenType::NOT, new ShiftAction{2} },
@@ -305,35 +403,20 @@ namespace PL {
   {    TokenType::IFF, new ShiftAction{11} },
   {    TokenType::IMPLIES, new ShiftAction{9} },
   {    TokenType::OR, new ShiftAction{7} },
-  {    TokenType::RPAREN, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IFF_FORMULA__thunk) },
-  {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_IFF_FORMULA__thunk) },
+  {    TokenType::RPAREN, new ShiftAction{23} },
 },
 {
-  {    TokenType::FALSE, new ShiftAction{15} },
-  {    Nonterminal::FORMULA, new ShiftAction{14} },
-  {    TokenType::IDENTIFIER, new ShiftAction{4} },
-  {    TokenType::LPAREN, new ShiftAction{3} },
-  {    TokenType::NOT, new ShiftAction{2} },
-  {    TokenType::TRUE, new ShiftAction{1} },
-},
-{
-  {    TokenType::AND, new ShiftAction{13} },
-  {    TokenType::IFF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
-  {    TokenType::IMPLIES, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
-  {    TokenType::OR, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
-  {    TokenType::RPAREN, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
-  {    TokenType::SCAN_EOF, new ReduceActionN<3>(Nonterminal::FORMULA, reduce_FORMULA_from_FORMULA_AND_FORMULA__thunk) },
-},
-{
-  {    TokenType::AND, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
-  {    TokenType::IFF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
-  {    TokenType::IMPLIES, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
-  {    TokenType::OR, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
-  {    TokenType::RPAREN, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
-  {    TokenType::SCAN_EOF, new ReduceActionN<1>(Nonterminal::FORMULA, reduce_FORMULA_from_FALSE__thunk) },
+  {    TokenType::AND, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
+  {    TokenType::COMMA, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
+  {    TokenType::IFF, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
+  {    TokenType::IMPLIES, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
+  {    TokenType::OR, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
+  {    TokenType::RPAREN, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
+  {    TokenType::SCAN_EOF, new ReduceActionN<8>(Nonterminal::FORMULA, reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN__thunk) },
 },
 {
   {    TokenType::AND, new ReduceActionN<2>(Nonterminal::FORMULA, reduce_FORMULA_from_NOT_FORMULA__thunk) },
+  {    TokenType::COMMA, new ReduceActionN<2>(Nonterminal::FORMULA, reduce_FORMULA_from_NOT_FORMULA__thunk) },
   {    TokenType::IFF, new ReduceActionN<2>(Nonterminal::FORMULA, reduce_FORMULA_from_NOT_FORMULA__thunk) },
   {    TokenType::IMPLIES, new ReduceActionN<2>(Nonterminal::FORMULA, reduce_FORMULA_from_NOT_FORMULA__thunk) },
   {    TokenType::OR, new ReduceActionN<2>(Nonterminal::FORMULA, reduce_FORMULA_from_NOT_FORMULA__thunk) },
@@ -432,7 +515,13 @@ namespace PL {
         throw runtime_error("Out of tokens, but parser hasn't finished.");
       }
 
-      std::shared_ptr<Expression> reduce_FORMULA_from_FALSE(const std::string&) {
+      std::shared_ptr<Expression> reduce_FORMULA_from_BOWTIE_LPAREN_FORMULA_COMMA_FORMULA_COMMA_FORMULA_RPAREN(const std::string&, const std::string&, std::shared_ptr<Expression> _parserArg3, const std::string&, std::shared_ptr<Expression> _parserArg5, const std::string&, std::shared_ptr<Expression> _parserArg7, const std::string&) {
+    std::shared_ptr<Expression> _parserArg0;
+    _parserArg0 = make_shared<BowtieExpression>(_parserArg3, _parserArg5, _parserArg7);
+    return _parserArg0;
+  }
+
+  std::shared_ptr<Expression> reduce_FORMULA_from_FALSE(const std::string&) {
     std::shared_ptr<Expression> _parserArg0;
     _parserArg0 = make_shared<FalseExpression>();
     return _parserArg0;

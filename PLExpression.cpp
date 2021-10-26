@@ -98,6 +98,39 @@ namespace PL {
     }
 
 
+    void BowtieExpression::print(ostream& out) const {
+        out << "⋈(" << *firstE << ", " << *secondE << ", " << *thirdE << ")";
+    }
+    void BowtieExpression::accept(ExpressionVisitor* visitor) const {
+        visitor->visit(*this);
+    }
+    bool BowtieExpression::evaluate(const Context& context) const {
+        /* Map from the subexpressions to a table row. We invert everything
+         * to match the variable ordering from the midterm.
+         */
+        size_t value = 4 * !firstE->evaluate(context) +
+                       2 * !secondE->evaluate(context) +
+                       1 * !thirdE->evaluate(context);
+
+        /* Sanity check. */
+        if (value >= 8) throw logic_error("Internal error: Evaluated beyond array bounds. Contact the course staff.");
+
+        /* Table from the handout. */
+        const bool kTable[8] = {
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true
+        };
+
+        return kTable[value];
+    }
+
+
 
 
     /* ExpressionTreeWalker implementation. */
@@ -136,6 +169,12 @@ namespace PL {
         handle(e);
         e.left()->accept(this);
         e.right()->accept(this);
+    }
+    void ExpressionTreeWalker::visit(const BowtieExpression& e) {
+        handle(e);
+        e.first()->accept(this);
+        e.second()->accept(this);
+        e.third()->accept(this);
     }
 
     /* Truth tables logic. */
