@@ -118,11 +118,11 @@ namespace PL {
         /* Table from the handout. */
         const bool kTable[8] = {
             true,
+            false,
+            false,
             true,
             false,
-            false,
-            false,
-            false,
+            true,
             false,
             true
         };
